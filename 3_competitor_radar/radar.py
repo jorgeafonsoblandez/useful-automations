@@ -92,25 +92,37 @@ def process_url(url: str):
     )
     
     diff_lines = list(diff)[2:]  # Skip the file header lines
-    added = [line[1:].strip() for line in diff_lines if line.startswith('+') and line.strip() != '+']
-    removed = [line[1:].strip() for line in diff_lines if line.startswith('-') and line.strip() != '-']
+    raw_added = [line[1:].strip() for line in diff_lines if line.startswith('+') and line.strip() != '+']
+    raw_removed = [line[1:].strip() for line in diff_lines if line.startswith('-') and line.strip() != '-']
     
-    # Format the Telegram alert
-    message = f"🚨 <b>Competitor Radar Alert</b> 🚨\n\nChanges detected on: <a href='{url}'>{url}</a>\n"
+    # Filter out lines that just moved around in the HTML (they appear in both lists)
+    added_set = set(raw_added)
+    removed_set = set(raw_removed)
     
-    if added:
-        message += "\n🟢 <b>Added Content:</b>\n"
-        for line in added[:5]:  # limit to top 5 changes so the message isn't massive
-            message += f"• {line[:50]}...\n"
-            
-    if removed:
-        message += "\n🔴 <b>Removed Content:</b>\n"
-        for line in removed[:5]:
-            message += f"• {line[:50]}...\n"
-            
-    message += "\n<i>Go check the page to see the full details!</i>"
+    added = [line for line in raw_added if line not in removed_set]
+    removed = [line for line in raw_removed if line not in added_set]
     
-    send_telegram_message(message)
+    # If after filtering there are no actual text changes, skip the alert!
+    if not added and not removed:
+        print(f"💤 Only layout/movement changes detected on {url}. Skipping alert.")
+        # We still save the state below so we have the latest HTML structure
+    else:
+        # Format the Telegram alert
+        message = f"🚨 <b>Competitor Radar Alert</b> 🚨\n\nChanges detected on: <a href='{url}'>{url}</a>\n"
+        
+        if added:
+            message += "\n🟢 <b>Added Content:</b>\n"
+            for line in added[:5]:  # limit to top 5 changes so the message isn't massive
+                message += f"• {line[:50]}...\n"
+                
+        if removed:
+            message += "\n🔴 <b>Removed Content:</b>\n"
+            for line in removed[:5]:
+                message += f"• {line[:50]}...\n"
+                
+        message += "\n<i>Go check the page to see the full details!</i>"
+        
+        send_telegram_message(message)
 
     # Save the new state so we don't alert again tomorrow unless it changes again
     with open(state_file, "w", encoding="utf-8") as f:
