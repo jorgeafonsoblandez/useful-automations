@@ -82,59 +82,34 @@ def main():
         return
 
     # If it differs, let's find out what changed!
-    print("🚨 Changes detected! Generating smart report...")
+    print("🚨 Changes detected! Generating report...")
     
-    # We create a diff summary
+    # We create a simple diff summary with 1 line of context (which usually catches the product name!)
     diff = difflib.unified_diff(
         previous_text.splitlines(),
         current_text.splitlines(),
         lineterm="",
-        n=3  # 3 lines of context to help the AI understand what product changed
+        n=1  # 1 line of context
     )
-    raw_diff = "\n".join(list(diff)[2:])
     
-    # Try to use AI to make it smart and context-aware!
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    smart_summary = ""
+    diff_lines = list(diff)[2:]  # Skip the file header lines
+    added = [line[1:].strip() for line in diff_lines if line.startswith('+') and line.strip() != '+']
+    removed = [line[1:].strip() for line in diff_lines if line.startswith('-') and line.strip() != '-']
     
-    if GEMINI_API_KEY:
-        try:
-            from google import genai
-            client = genai.Client(api_key=GEMINI_API_KEY)
-            prompt = (
-                f"You are a competitive intelligence bot monitoring {TARGET_URL}. "
-                "Below is the raw text diff of changes made to the website today. "
-                "Instead of showing raw code-like diffs (+ and -), smartly summarize exactly what changed in a human way. "
-                "For example: 'Earrings 234212 dropped in price from 75,00€ to 70,00€'. "
-                "Keep it very brief, punchy, and use emojis. Do not output markdown code blocks. \n\n"
-                f"DIFF:\n{raw_diff}"
-            )
-            response = client.models.generate_content(
-                model='gemini-3.6-flash',
-                contents=prompt,
-            )
-            smart_summary = response.text.strip()
-        except Exception as e:
-            print(f"AI summarization failed: {e}")
-            smart_summary = ""
-
     # Format the Telegram alert
-    message = f"🚨 <b>Competitor Radar Alert</b> 🚨\n\nChanges detected on: <a href='{TARGET_URL}'>{TARGET_URL}</a>\n\n"
+    message = f"🚨 <b>Competitor Radar Alert</b> 🚨\n\nChanges detected on: <a href='{TARGET_URL}'>{TARGET_URL}</a>\n"
     
-    if smart_summary:
-        message += f"🤖 <b>AI Summary:</b>\n{smart_summary}\n"
-    else:
-        # Fallback to raw lines if no AI key
-        diff_lines = raw_diff.splitlines()
-        added = [line[1:].strip() for line in diff_lines if line.startswith('+') and line.strip() != '+']
-        removed = [line[1:].strip() for line in diff_lines if line.startswith('-') and line.strip() != '-']
-        
-        if added:
-            message += "\n🟢 <b>Added:</b>\n" + "\n".join([f"• {l[:50]}..." for l in added[:5]])
-        if removed:
-            message += "\n🔴 <b>Removed:</b>\n" + "\n".join([f"• {l[:50]}..." for l in removed[:5]])
+    if added:
+        message += "\n🟢 <b>Added Content:</b>\n"
+        for line in added[:5]:  # limit to top 5 changes so the message isn't massive
+            message += f"• {line[:50]}...\n"
             
-    message += "\n\n<i>Go check the page to see the full details!</i>"
+    if removed:
+        message += "\n🔴 <b>Removed Content:</b>\n"
+        for line in removed[:5]:
+            message += f"• {line[:50]}...\n"
+            
+    message += "\n<i>Go check the page to see the full details!</i>"
     
     send_telegram_message(message)
 
