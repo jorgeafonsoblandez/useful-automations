@@ -37,4 +37,4 @@ python scanner.py
 *(Note for Windows users: If `pip` or `python` are not recognized, use `py -m pip install -r requirements.txt` and `py scanner.py`).*
 
 ### 4. Clean up your footprint!
-Once the script finishes, it will generate an `audit_report.md` file in the same folder. Open it to find your personalized account deletion links!
+Once the script finishes, it will generate an `audit_report.html` file in the same folder. Open it to find your personalized account deletion links!
