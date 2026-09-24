@@ -49,4 +49,4 @@ If you prefer not to install Python locally, you can run the Auditor securely on
    - AUDITOR_APP_PASSWORD: Your 16-character App Password
    - AUDITOR_GEMINI_KEY: Your Gemini API Key
 3. Go to the **Actions** tab, click **Account Auditor (Manual)**, and click **Run workflow**.
-4. When it finishes, click on the completed run and scroll to the bottom to download your \udit_report.html\ artifact!
+4. When it finishes, click on the completed run and scroll to the bottom to download your \audit_report.html\ artifact!
