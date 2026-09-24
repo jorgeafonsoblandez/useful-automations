@@ -9,7 +9,7 @@ Because this is a radar, you want it running every day automatically without hav
 2. Go to your new repository's **Settings -> Secrets and variables -> Actions** and click *New repository secret*. Add these three:
    - `RADAR_BOT_TOKEN`: Your Telegram Bot Token (from @BotFather)
    - `RADAR_CHAT_ID`: Your personal Telegram Chat ID
-   - `RADAR_TARGET_URL`: The website you want to monitor (e.g. `https://example.com/pricing`)
+   - `RADAR_TARGET_URLS`: The websites you want to monitor separated by a comma (e.g. `https://apple.com,https://google.com`)
 3. Go to the **Actions** tab at the top of your repo and click **I understand my workflows, go ahead and enable them**.
 
 That's it! GitHub will now check the website every morning at 8:00 AM UTC and ping your phone if anything changes!

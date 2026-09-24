@@ -2,6 +2,7 @@ import os
 import sys
 import difflib
 import requests
+import hashlib
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
@@ -10,8 +11,12 @@ load_dotenv()
 # Configuration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-TARGET_URL = os.getenv("TARGET_URL")
-STATE_FILE = "last_snapshot.txt"
+TARGET_URLS = os.getenv("TARGET_URLS", os.getenv("TARGET_URL")) # Backwards compatible
+
+def get_snapshot_filename(url: str) -> str:
+    """Generates a safe, unique filename for each URL's snapshot."""
+    url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
+    return f"snapshot_{url_hash}.txt"
 
 def send_telegram_message(message: str):
     """Sends a message via Telegram."""
@@ -42,47 +47,41 @@ def fetch_page_text(url: str) -> str:
     response = requests.get(url, headers=headers, timeout=15)
     response.raise_for_status()
     
-    # Parse the HTML and extract text
     soup = BeautifulSoup(response.text, "html.parser")
-    
-    # Remove script and style elements
     for script in soup(["script", "style", "noscript", "meta", "header", "footer"]):
         script.decompose()
         
-    # Get text and collapse whitespace
     text = soup.get_text(separator="\n")
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return "\n".join(lines)
 
-def main():
-    if not TARGET_URL:
-        print("❌ Please set TARGET_URL in your .env file.")
-        sys.exit(1)
-
+def process_url(url: str):
     try:
-        current_text = fetch_page_text(TARGET_URL)
+        current_text = fetch_page_text(url)
     except Exception as e:
-        print(e)
-        sys.exit(1)
+        print(f"❌ Failed to process {url}: {e}")
+        return
+
+    state_file = get_snapshot_filename(url)
 
     # Check if we have a previous snapshot to compare against
-    if not os.path.exists(STATE_FILE):
-        print("📝 No previous snapshot found. Saving initial state...")
-        with open(STATE_FILE, "w", encoding="utf-8") as f:
+    if not os.path.exists(state_file):
+        print(f"📝 No previous snapshot found for {url}. Saving initial state...")
+        with open(state_file, "w", encoding="utf-8") as f:
             f.write(current_text)
-        print("✅ Initial state saved! The next time this runs, it will check for changes.")
+        print("✅ Initial state saved!")
         return
 
     # Read the old snapshot
-    with open(STATE_FILE, "r", encoding="utf-8") as f:
+    with open(state_file, "r", encoding="utf-8") as f:
         previous_text = f.read()
 
     if current_text == previous_text:
-        print("💤 No changes detected on the page.")
+        print(f"💤 No changes detected on {url}.")
         return
 
     # If it differs, let's find out what changed!
-    print("🚨 Changes detected! Generating report...")
+    print(f"🚨 Changes detected on {url}! Generating report...")
     
     # We create a simple diff summary with 1 line of context (which usually catches the product name!)
     diff = difflib.unified_diff(
@@ -97,7 +96,7 @@ def main():
     removed = [line[1:].strip() for line in diff_lines if line.startswith('-') and line.strip() != '-']
     
     # Format the Telegram alert
-    message = f"🚨 <b>Competitor Radar Alert</b> 🚨\n\nChanges detected on: <a href='{TARGET_URL}'>{TARGET_URL}</a>\n"
+    message = f"🚨 <b>Competitor Radar Alert</b> 🚨\n\nChanges detected on: <a href='{url}'>{url}</a>\n"
     
     if added:
         message += "\n🟢 <b>Added Content:</b>\n"
@@ -114,9 +113,21 @@ def main():
     send_telegram_message(message)
 
     # Save the new state so we don't alert again tomorrow unless it changes again
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
+    with open(state_file, "w", encoding="utf-8") as f:
         f.write(current_text)
-    print("✅ State updated.")
+    print(f"✅ State updated for {url}.")
+
+def main():
+    if not TARGET_URLS:
+        print("❌ Please set TARGET_URLS in your .env file (comma-separated if multiple).")
+        sys.exit(1)
+        
+    urls = [u.strip() for u in TARGET_URLS.split(",") if u.strip()]
+    print(f"🚀 Starting Radar for {len(urls)} target(s)...")
+    
+    for url in urls:
+        process_url(url)
+        print("-" * 30)
 
 if __name__ == "__main__":
     main()
