@@ -1,0 +1,33 @@
+name: Account Auditor (Manual)
+
+on:
+  workflow_dispatch: {} # Allows manual triggering from the Actions tab
+
+jobs:
+  run-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: ./1_account_auditor
+        run: pip install -r requirements.txt
+
+      - name: Run Auditor
+        working-directory: ./1_account_auditor
+        env:
+          EMAIL_ACCOUNT: ${{ secrets.AUDITOR_EMAIL }}
+          APP_PASSWORD: ${{ secrets.AUDITOR_APP_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.AUDITOR_GEMINI_KEY }}
+        run: python scanner.py
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: 1_account_auditor/audit_report.html
+          retention-days: 7

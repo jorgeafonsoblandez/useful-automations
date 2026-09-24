@@ -26,9 +26,9 @@ jobs:
       - name: Run scraper
         working-directory: ./2_bin_notifier
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          COLLECTION_PAGE_URL: ${{ secrets.COLLECTION_PAGE_URL }}
+          BIN_BOT_TOKEN: ${{ secrets.BIN_BOT_TOKEN }}
+          BIN_CHAT_ID: ${{ secrets.BIN_CHAT_ID }}
+          BIN_COLLECTION_URL: ${{ secrets.BIN_COLLECTION_URL }}
         run: python scraper.py
 
       # The scraper falls back to a Telegram message with a direct link

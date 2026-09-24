@@ -32,8 +32,8 @@ import requests
 
 # The address-specific page URL is kept out of the repo (it identifies my
 # home address) and passed in as a GitHub Actions secret instead. See
-# README.md for how to set COLLECTION_PAGE_URL.
-URL = os.environ.get("COLLECTION_PAGE_URL")
+# README.md for how to set BIN_COLLECTION_URL.
+URL = os.environ.get("BIN_COLLECTION_URL")
 
 # These headers get past Fastly's 406 block when running from a normal
 # (non-datacenter) connection: sec-fetch-site must be "same-origin" and a
@@ -55,8 +55,8 @@ HEADERS = {
     "referer": "https://www.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days.html",
 }
 
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+TELEGRAM_TOKEN = os.environ.get("BIN_BOT_TOKEN")
+BIN_CHAT_ID = os.environ.get("BIN_CHAT_ID")
 
 # Maps the site's internal icon name to our own keys
 ICON_TO_KEY = {
@@ -76,7 +76,7 @@ PATTERN = re.compile(
 
 def fetch_page() -> str:
     if not URL:
-        raise RuntimeError("Missing COLLECTION_PAGE_URL secret/environment variable.")
+        raise RuntimeError("Missing BIN_COLLECTION_URL secret/environment variable.")
 
     resp = requests.get(URL, headers=HEADERS, timeout=20)
 
@@ -105,13 +105,13 @@ def parse_collection_dates(html: str) -> dict:
 
 
 def send_telegram(message: str):
-    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        print("Missing TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID secrets.", file=sys.stderr)
+    if not TELEGRAM_TOKEN or not BIN_CHAT_ID:
+        print("Missing BIN_BOT_TOKEN / BIN_CHAT_ID secrets.", file=sys.stderr)
         sys.exit(1)
     api_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     resp = requests.post(
         api_url,
-        data={"chat_id": TELEGRAM_CHAT_ID, "text": message},
+        data={"chat_id": BIN_CHAT_ID, "text": message},
         timeout=10,
     )
     resp.raise_for_status()
@@ -129,7 +129,7 @@ def main():
         # direct link so the reminder still shows up.
         print(f"Could not fetch the page automatically: {e}", file=sys.stderr)
         if not URL:
-            print("No COLLECTION_PAGE_URL configured — can't build a fallback link.", file=sys.stderr)
+            print("No BIN_COLLECTION_URL configured — can't build a fallback link.", file=sys.stderr)
             sys.exit(1)
         fallback = (
             f"🗑️ Couldn't check your bin day automatically today. "

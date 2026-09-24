@@ -14,6 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache snapshots
+        uses: actions/cache@v4
+        with:
+          path: 3_competitor_radar/snapshot_*.txt
+          key: competitor-snapshots-${{ github.run_id }}
+          restore-keys: |
+            competitor-snapshots-
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -29,12 +37,3 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.RADAR_CHAT_ID }}
           TARGET_URLS: ${{ secrets.RADAR_TARGET_URLS }}
         run: python radar.py
-
-      - name: Save new snapshot to GitHub
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add 3_competitor_radar/snapshot_*.txt
-          # It will only commit if the file actually changed
-          git commit -m "Update competitor snapshot [skip ci]" || echo "No changes to commit"
-          git push
