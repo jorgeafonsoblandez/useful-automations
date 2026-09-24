@@ -20,9 +20,11 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
+        working-directory: ./2_bin_notifier
         run: pip install -r requirements.txt
 
       - name: Run scraper
+        working-directory: ./2_bin_notifier
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -38,5 +40,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-response
-          path: debug_response.html
+          path: 2_bin_notifier/debug_response.html
           if-no-files-found: ignore
