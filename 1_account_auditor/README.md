@@ -38,3 +38,15 @@ python scanner.py
 
 ### 4. Clean up your footprint!
 Once the script finishes, it will generate an `audit_report.html` file in the same folder. Open it to find your personalized account deletion links!
+---
+
+## ☁️ How to run in the Cloud (via GitHub)
+If you prefer not to install Python locally, you can run the Auditor securely on GitHub servers:
+
+1. Fork this repository and go to **Settings -> Secrets and variables -> Actions**.
+2. Add these three secrets:
+   - AUDITOR_EMAIL: Your Gmail address
+   - AUDITOR_APP_PASSWORD: Your 16-character App Password
+   - AUDITOR_GEMINI_KEY: Your Gemini API Key
+3. Go to the **Actions** tab, click **Account Auditor (Manual)**, and click **Run workflow**.
+4. When it finishes, click on the completed run and scroll to the bottom to download your \udit_report.html\ artifact!

@@ -38,9 +38,9 @@ Telegram Bot API · GitHub Secrets
 3. **Find your own collection-day page URL**: use your council's "find my
    collection day" tool for your address; copy the resulting URL.
 4. In this repo: **Settings → Secrets and variables → Actions** → add:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-   - `COLLECTION_PAGE_URL` — your address's collection-day page URL
+   - `BIN_BOT_TOKEN`
+   - `BIN_CHAT_ID`
+   - `BIN_COLLECTION_URL` — your address's collection-day page URL
 5. Test it manually: **Actions tab → Check bin day → Run workflow**, then
    check the logs.
 
