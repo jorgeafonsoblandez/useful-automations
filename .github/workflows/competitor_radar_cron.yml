@@ -1,0 +1,40 @@
+name: Competitor Radar
+
+on:
+  schedule:
+    # Runs at 08:00 UTC every day
+    - cron: "0 8 * * *"
+  workflow_dispatch: {} # Allows manual triggering from the Actions tab
+
+jobs:
+  check-competitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to commit the snapshot back to the repo
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: ./3_competitor_radar
+        run: pip install -r requirements.txt
+
+      - name: Run Radar
+        working-directory: ./3_competitor_radar
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.RADAR_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.RADAR_CHAT_ID }}
+          TARGET_URL: ${{ secrets.RADAR_TARGET_URL }}
+        run: python radar.py
+
+      - name: Save new snapshot to GitHub
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add 3_competitor_radar/last_snapshot.txt
+          # It will only commit if the file actually changed
+          git commit -m "Update competitor snapshot [skip ci]" || echo "No changes to commit"
+          git push
