@@ -121,9 +121,11 @@ def generate_action_plan(domains_list):
         
         prompt = (
             "I am auditing my digital footprint. Here are the top domains sending me emails. "
-            "For each company, provide the direct URL to delete my account, and the URL to unsubscribe "
-            "from marketing if applicable. Format it as a clean Markdown table with columns: "
-            "Company Name, Delete Account Link, Unsubscribe Link.\n\nDomains:\n"
+            "For each company, provide the direct URL to delete my account, and the URL to unsubscribe. "
+            "Format the output as a beautiful, simple, standalone HTML webpage. "
+            "Use a modern, clean font (like Arial or sans-serif), put the data in a nice HTML table with some padding, "
+            "and make sure the URLs are actual clickable HTML <a> links (e.g., <a href='...'>Delete Account</a>). "
+            "Do not include markdown code blocks like ```html, just output the raw HTML code directly.\n\nDomains:\n"
         )
         for domain, count in domains_list:
             prompt += f"- {domain}\n"
@@ -133,13 +135,14 @@ def generate_action_plan(domains_list):
             contents=prompt,
         )
         
-        with open("audit_report.md", "w", encoding="utf-8") as f:
-            f.write("# 🛡️ Personal Account & Subscription Audit\n\n")
-            f.write("Here are the direct links to clean up your digital footprint based on your inbox:\n\n")
-            f.write(response.text)
+        # Clean up any accidental markdown formatting the AI might still add
+        html_content = response.text.replace("```html", "").replace("```", "").strip()
+        
+        with open("audit_report.html", "w", encoding="utf-8") as f:
+            f.write(html_content)
             
-        print("✅ Action plan generated and saved to 'audit_report.md'!")
-        print("Open the file in your IDE to start clicking the links and cleaning up your accounts!")
+        print("✅ Action plan generated and saved to 'audit_report.html'!")
+        print("Simply double-click 'audit_report.html' to open it in your web browser and start clicking the links!")
         
     except Exception as e:
         print(f"❌ AI Generation failed: {e}")
