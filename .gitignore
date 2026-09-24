@@ -1,0 +1,6 @@
+.env
+audit_report.md
+__pycache__/
+*.pyc
+scratch_test.py
+screenshot.png
