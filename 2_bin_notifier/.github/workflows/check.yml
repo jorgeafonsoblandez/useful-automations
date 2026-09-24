@@ -1,0 +1,42 @@
+name: Check bin day
+
+on:
+  schedule:
+    # Mondays only. Scheduled for 16:15 NZST / 17:15 NZDT.
+    # We avoid running at the exact top of the hour (like 05:00) because GitHub
+    # Actions queues get heavily overloaded, which can delay the run by hours.
+    # 04:15 UTC ≈ 16:15 NZST / 17:15 NZDT.
+    - cron: "15 4 * * 1"
+  workflow_dispatch: {}   # lets you trigger it manually from the Actions tab
+
+jobs:
+  check-bins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          COLLECTION_PAGE_URL: ${{ secrets.COLLECTION_PAGE_URL }}
+        run: python scraper.py
+
+      # The scraper falls back to a Telegram message with a direct link
+      # instead of raising, so this job succeeds even when the site blocks
+      # the request — but the debug HTML is still uploaded if it was saved,
+      # for troubleshooting.
+      - name: Upload debug page if present
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-response
+          path: debug_response.html
+          if-no-files-found: ignore
