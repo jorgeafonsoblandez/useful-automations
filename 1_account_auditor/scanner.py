@@ -56,8 +56,8 @@ def scan_inbox():
     senders = Counter()
     domains = Counter()
     
-    # Process up to the last 1000 emails to keep the script fast
-    limit = 1000
+    # Process up to the last 3000 emails to get a more comprehensive view
+    limit = 3000
     process_ids = email_ids[-limit:]
     
     print(f"⚙️ Extracting data from the {len(process_ids)} most recent matches...")
@@ -91,7 +91,7 @@ def scan_inbox():
     print("="*50)
     
     print("\n🏢 TOP COMPANIES/DOMAINS WITH YOUR DATA:")
-    for domain, count in domains.most_common(15):
+    for domain, count in domains.most_common(20):
         print(f"  - {domain} ({count} emails)")
         
     print("\n📬 TOP SPECIFIC SENDERS:")
@@ -101,10 +101,11 @@ def scan_inbox():
     print("\n" + "="*50)
     print("💡 Next Step: Generating AI Action Plan...")
     
-    top_domains = domains.most_common(15)
-    generate_action_plan(top_domains)
+    # Pass top 20 domains now
+    top_domains = domains.most_common(20)
+    generate_action_plan(top_domains, len(process_ids))
 
-def generate_action_plan(domains_list):
+def generate_action_plan(domains_list, scanned_count):
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     if not GEMINI_API_KEY:
         print("\n⚠️ GEMINI_API_KEY not found in .env! Skipping AI Action Plan generation.")
@@ -113,7 +114,6 @@ def generate_action_plan(domains_list):
         
     print("🧠 Asking AI to find direct Delete/Unsubscribe links for you...")
     
-    # We import inside the function to keep the initial IMAP script lightweight if no key is present
     from google import genai
     
     try:
@@ -122,9 +122,13 @@ def generate_action_plan(domains_list):
         prompt = (
             "I am auditing my digital footprint. Here are the top domains sending me emails. "
             "For each company, provide the direct URL to delete my account, and the URL to unsubscribe. "
+            "IMPORTANT: If there are multiple subdomains for the same company (e.g. 'order.temu.com' and 'orders.temu.com'), "
+            "MERGE them into a single row for that company. Do not list duplicates.\n\n"
             "Format the output as a beautiful, simple, standalone HTML webpage. "
-            "Use a modern, clean font (like Arial or sans-serif), put the data in a nice HTML table with some padding, "
-            "and make sure the URLs are actual clickable HTML <a> links (e.g., <a href='...'>Delete Account</a>). "
+            "Use a modern, clean font, put the data in a nice HTML table. "
+            f"At the very top of the webpage, include this exact disclaimer in italics: "
+            f"'Disclaimer: This report is based on a scan of the {scanned_count} most recent promotional emails in your inbox.'\n"
+            "Make sure the URLs are actual clickable HTML <a> links. "
             "Do not include markdown code blocks like ```html, just output the raw HTML code directly.\n\nDomains:\n"
         )
         for domain, count in domains_list:
