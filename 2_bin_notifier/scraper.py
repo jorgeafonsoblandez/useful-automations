@@ -1,7 +1,7 @@
 """
 Bin Day Notifier
 -----------------
-Runs once a week (Monday afternoon — see .github/workflows/check.yml) and
+Runs once a week (Monday morning — see .github/workflows/bin_notifier_cron.yml) and
 sends a Telegram message about the upcoming bin collection, since that's
 when I put the bins out for Tuesday's usual collection.
 
@@ -27,6 +27,7 @@ import os
 import re
 import sys
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -154,7 +155,9 @@ def main():
 
     print("Dates found:", collections)
 
-    tomorrow = date.today() + timedelta(days=1)
+    nz_now = datetime.now(ZoneInfo("Pacific/Auckland"))
+    today = nz_now.date()
+    tomorrow = today + timedelta(days=1)
     due_tomorrow = [
         name.replace("_", " ").title()
         for name, d in collections.items()
